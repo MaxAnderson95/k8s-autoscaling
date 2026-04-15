@@ -15,13 +15,17 @@ import (
 	"github.com/maxanderson95/k8s-autoscaling/demo-app/internal/otel"
 )
 
+var version = "0.0.0-dev"
+
 func main() {
+	log.Printf("demo-app version %s", version)
+
 	port, _ := strconv.Atoi(envOrDefault("PORT", "8080"))
 	maxMemoryMB, _ := strconv.ParseInt(envOrDefault("MAX_MEMORY_MB", "1024"), 10, 64)
 
 	ctx := context.Background()
 
-	result, err := otel.Init(ctx, "demo-app", "0.1.0")
+	result, err := otel.Init(ctx, "demo-app", version)
 	if err != nil {
 		log.Fatalf("failed to initialize OTel: %v", err)
 	}

@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: ghcr.io/maxanderson95/k8s-autoscaling/demo-app
-  tag: test
+  tag: 0.0.0-dev
   pullPolicy: IfNotPresent
 
 resources:

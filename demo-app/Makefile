@@ -1,8 +1,8 @@
-REGISTRY ?= ghcr.io/maxanderson95
+REGISTRY ?= ghcr.io/maxanderson95/k8s-autoscaling
 IMAGE_NAME ?= demo-app
 TAG ?= latest
 
-.PHONY: build docker-build docker-push helm-install helm-upgrade lint
+.PHONY: build docker-build docker-push helm-install helm-upgrade lint helm-lint helm-template test chart-release
 
 build:
 	go build -o bin/demo-app ./cmd/server
@@ -30,3 +30,12 @@ helm-template:
 
 test:
 	go test ./...
+
+chart-release: docker-push
+	mkdir -p /tmp/chart-release && \
+	cp -r chart /tmp/chart-release/chart && \
+	sed -i.bak 's/0.0.0-dev/$(TAG)/g' /tmp/chart-release/chart/Chart.yaml && \
+	sed -i.bak '/appVersion/s/0.0.0-dev/$(TAG)/g' /tmp/chart-release/chart/Chart.yaml && \
+	sed -i.bak 's/0.0.0-dev/$(TAG)/g' /tmp/chart-release/chart/values.yaml && \
+	helm package /tmp/chart-release/chart --destination /tmp/chart-release/ && \
+	rm -rf /tmp/chart-release/chart
