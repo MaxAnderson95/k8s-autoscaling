@@ -91,7 +91,7 @@ curl http://localhost:8080/metrics
 
 ```bash
 # Install from GHCR (released version)
-helm install demo-app oci://ghcr.io/maxanderson95/k8s-autoscaling/charts/demo-app -n auto-scaling-demo
+helm install demo-app oci://ghcr.io/maxanderson95/k8s-autoscaling/demo-app-chart -n auto-scaling-demo
 
 # Or: install from local chart for development
 helm install demo-app ./chart -n auto-scaling-demo

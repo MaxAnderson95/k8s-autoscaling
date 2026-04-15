@@ -83,12 +83,12 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
 
       - name: Push Helm chart to GHCR
-        run: helm push /tmp/demo-app-*.tgz oci://ghcr.io/${REPO,,}/charts
+        run: helm push /tmp/demo-app-chart-*.tgz oci://ghcr.io/${REPO,,}
         env:
           REPO: ${{ github.repository }}
 
       - name: Create GitHub Release and upload chart
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          files: /tmp/demo-app-*.tgz
+          files: /tmp/demo-app-chart-*.tgz
           generate_release_notes: true

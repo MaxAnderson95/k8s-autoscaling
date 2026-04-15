@@ -1,3 +1,6 @@
+nameOverride: demo-app
+fullnameOverride: ""
+
 replicaCount: 1
 
 image:

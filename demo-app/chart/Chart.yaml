@@ -1,5 +1,5 @@
 apiVersion: v2
-name: demo-app
+name: demo-app-chart
 description: A test application for learning Kubernetes autoscaling (HPA, VPA, KEDA, Cluster Autoscaler)
 type: application
 version: 0.0.0-dev
