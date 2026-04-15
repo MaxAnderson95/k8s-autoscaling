@@ -48,7 +48,7 @@ kubectl apply -f namespace.yaml
 Install the demo app via Helm:
 
 ```bash
-helm install demo-app ../../demo-app/chart -n auto-scaling-demo
+helm install demo-app oci://ghcr.io/maxanderson95/k8s-autoscaling/demo-app --version 0.0.2 -n auto-scaling-demo
 ```
 
 Wait for the pod to be running:
