@@ -1,12 +1,13 @@
 ARG VERSION=0.0.0-dev
 
-FROM golang:1.24 AS builder
+FROM golang:1.25 AS builder
 
 ARG VERSION
 
 WORKDIR /app
 
 COPY go.mod go.sum ./
+ENV GOTOOLCHAIN=local
 RUN go mod download
 
 COPY . .
