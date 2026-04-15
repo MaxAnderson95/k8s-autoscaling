@@ -34,8 +34,8 @@ test:
 chart-release: docker-push
 	mkdir -p /tmp/chart-release && \
 	cp -r chart /tmp/chart-release/chart && \
-	sed -i.bak 's/0.0.0-dev/$(TAG)/g' /tmp/chart-release/chart/Chart.yaml && \
-	sed -i.bak '/appVersion/s/0.0.0-dev/$(TAG)/g' /tmp/chart-release/chart/Chart.yaml && \
-	sed -i.bak 's/0.0.0-dev/$(TAG)/g' /tmp/chart-release/chart/values.yaml && \
+	yq -i ".version = \"$(TAG)\"" /tmp/chart-release/chart/Chart.yaml && \
+	yq -i ".appVersion = \"$(TAG)\"" /tmp/chart-release/chart/Chart.yaml && \
+	yq -i ".image.tag = \"$(TAG)\"" /tmp/chart-release/chart/values.yaml && \
 	helm package /tmp/chart-release/chart --destination /tmp/chart-release/ && \
 	rm -rf /tmp/chart-release/chart
