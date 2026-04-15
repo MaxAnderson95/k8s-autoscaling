@@ -1,0 +1,12 @@
+Your demo-app is installed!
+
+Test the endpoints:
+  kubectl port-forward svc/{{ include "demo-app.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
+
+  curl http://localhost:80/healthz
+  curl -X POST "http://localhost:80/cpu?intensity=2&duration=30s&ramp=10s"
+  curl -X POST "http://localhost:80/memory?mb=256&duration=60s&ramp=15s"
+  curl -X POST "http://localhost:80/load?workers=4&duration=120s&ramp=30s"
+  curl "http://localhost:80/fibonacci?n=40"
+  curl -X POST "http://localhost:80/queue?depth=100&ramp=10s"
+  curl http://localhost:80/metrics

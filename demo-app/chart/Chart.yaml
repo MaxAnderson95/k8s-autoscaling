@@ -1,0 +1,6 @@
+apiVersion: v2
+name: demo-app
+description: A test application for learning Kubernetes autoscaling (HPA, VPA, KEDA, Cluster Autoscaler)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
