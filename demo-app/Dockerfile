@@ -3,6 +3,7 @@ ARG VERSION=0.0.0-dev
 FROM golang:1.25 AS builder
 
 ARG VERSION
+ARG TARGETARCH
 
 WORKDIR /app
 
@@ -12,7 +13,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-X main.version=${VERSION}" -o /demo-app ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -ldflags="-X main.version=${VERSION}" -o /demo-app ./cmd/server
 
 FROM gcr.io/distroless/static:nonroot
 
