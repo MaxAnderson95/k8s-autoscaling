@@ -108,16 +108,25 @@ kubectl get hpa -n auto-scaling-demo -w
 # demo-app-cpu     Deployment/demo-app   0%/50%     1         5         1          60s
 ```
 
-## Step 3 — Trigger CPU Scale-Out
+## Step 3 — Deploy Load Generator
 
-Hit the `/cpu` endpoint to ramp up CPU load:
+Instead of hitting a single pod with a massive request, we'll deploy a load generator that sends many small requests to the **service** — Kubernetes will load-balance them across all pods, just like real traffic.
 
 ```bash
-curl -X POST 'http://localhost:8080/cpu?intensity=4&duration=120s&ramp=10s'
-# CPU burn started: intensity=4 duration=120s ramp=10s
+kubectl apply -f load-generator.yaml -n auto-scaling-demo
 ```
 
-This gradually ramps from 1 to 4 CPU-burning goroutines over 10 seconds, sustains for 110 seconds, then ramps down over another 10 seconds.
+This spins up 3 replicas, each hitting `http://demo-app.auto-scaling-demo.svc.cluster.local/fibonacci?n=35` ~10 times per second. Each request does a deterministic CPU computation (fibonacci(35)).
+
+Check the load generator is running:
+
+```bash
+kubectl get pods -n auto-scaling-demo -l app=load-generator
+# NAME                              READY   STATUS    RESTARTS   AGE
+# load-generator-xxxxxxxxxx-aaaaa   1/1     Running   0          10s
+# load-generator-xxxxxxxxxx-bbbbb   1/1     Running   0          10s
+# load-generator-xxxxxxxxxx-ccccc   1/1     Running   0          10s
+```
 
 Watch the HPA respond:
 
@@ -137,38 +146,46 @@ You should see something like:
 ```
 # HPA
 NAME             REFERENCE             TARGETS    MINPODS   MAXPODS   REPLICAS
-demo-app-cpu     Deployment/demo-app   185%/50%   1         5         3
-
-# Pods
-NAME                        READY   STATUS    RESTARTS   AGE
-demo-app-xxxxxxxxxx-abcde   1/1     Running   0          45s
-demo-app-xxxxxxxxxx-fghij   1/1     Running   0          30s
-demo-app-xxxxxxxxxx-klmno   1/1     Running   0          15s
+demo-app-cpu     Deployment/demo-app   120%/50%   1         5         1
+demo-app-cpu     Deployment/demo-app   120%/50%   1         5         2
+demo-app-cpu     Deployment/demo-app   85%/50%    1         5         2
+demo-app-cpu     Deployment/demo-app   62%/50%    1         5         3
+demo-app-cpu     Deployment/demo-app   48%/50%    1         5         3
 ```
 
 Key things to observe:
-- CPU utilization jumps well above the 50% threshold
-- HPA creates new pods (you'll see 2, then 3, possibly 4, depending on your node sizes)
-- The `REPLICAS` column in `kubectl get hpa` increases
-- Once the burn completes, utilization drops and pods eventually scale back down
+- CPU utilization rises above the 50% threshold from distributed load
+- HPA creates new pods — notice the replicas count increase
+- As new pods come online, the load **distributes** across them
+- Average CPU % drops as more pods share the load — this is real autoscaling behavior
+- Once enough pods are running, CPU stabilizes below the threshold
 
 ## Step 4 — Observe Scale-Down
 
-After the CPU burn ends (120 seconds), watch the pods scale back down. This takes a few minutes because HPA has a stabilization window (default 5 minutes from the last scale-up event, per `behavior.scaleDown.stabilizationWindowSeconds`).
+Scale down the load generator to remove the traffic:
 
 ```bash
-# You can reduce the scale-down delay by editing the HPA:
-kubectl patch hpa demo-app-cpu -n auto-scaling-demo --type merge -p '
-{
-  "spec": {
-    "behavior": {
-      "scaleDown": {
-        "stabilizationWindowSeconds": 60
-      }
-    }
-  }
-}
-'
+kubectl scale deployment load-generator --replicas=0 -n auto-scaling-demo
+```
+
+Or delete it entirely:
+
+```bash
+kubectl delete deployment load-generator -n auto-scaling-demo
+```
+
+Watch CPU drop and pods scale back down:
+
+```bash
+kubectl get hpa -n auto-scaling-demo -w
+# NAME             REFERENCE             TARGETS   MINPODS   MAXPODS   REPLICAS
+# demo-app-cpu     Deployment/demo-app   0%/50%    1         5         3
+# demo-app-cpu     Deployment/demo-app   0%/50%    1         5         3  (waits...)
+# demo-app-cpu     Deployment/demo-app   0%/50%    1         5         2  (scaling down)
+# demo-app-cpu     Deployment/demo-app   0%/50%    1         5         1  (back to baseline)
+```
+
+HPA has a stabilization window (default 5 minutes from the last scale-up event, per `behavior.scaleDown.stabilizationWindowSeconds`). Scale-down won't happen immediately — it waits to prevent flapping.
 ```
 
 ## Step 5 — Memory-Based HPA
@@ -204,6 +221,9 @@ The memory HPA triggers at 50% average memory utilization. With `limits: 512Mi` 
 ## Step 6 — Clean Up
 
 ```bash
+# Remove the load generator
+kubectl delete deployment load-generator -n auto-scaling-demo
+
 # Remove HPA
 kubectl delete hpa demo-app-cpu demo-app-memory -n auto-scaling-demo
 
@@ -220,10 +240,10 @@ kubectl delete namespace auto-scaling-demo
 |---|---|
 | HPA reads metrics from Metrics Server | `kubectl top pods` must work for HPA to function |
 | HPA is reactive, not predictive | It scales *after* load exceeds the threshold, not before |
+| Load distributes across pods | New pods pick up traffic, smoothing the per-pod CPU average |
 | Scale-up is fast (~15s default) | New pods appear quickly once the threshold is breached |
 | Scale-down has a cooldown window | Default 5-minute stabilization prevents flapping |
-| `intensity` controls concurrent goroutines | 4 goroutines ≈ 4 CPU cores of load |
-| `ramp` parameter makes load realistic | Gradual increase mimics production traffic patterns |
+| Service-level load matters | Hitting the Service (not a pod) distributes load realistically |
 | Resource requests determine thresholds | HPA calculates % utilization against the pod's `resources.requests` |
 
 ## Next Steps

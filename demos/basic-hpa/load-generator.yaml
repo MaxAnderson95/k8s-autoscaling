@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+  namespace: auto-scaling-demo
+  labels:
+    app: load-generator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+    spec:
+      containers:
+      - name: curl
+        image: curlimages/curl:latest
+        command:
+        - sh
+        - -c
+        - |
+          while true; do
+            curl -sS -o /dev/null -w "%{http_code}" http://demo-app.auto-scaling-demo.svc.cluster.local/fibonacci?n=35
+            echo ""
+            sleep 0.1
+          done
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 100m
+            memory: 32Mi
