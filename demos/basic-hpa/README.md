@@ -185,7 +185,7 @@ kubectl get hpa -n auto-scaling-demo -w
 # demo-app-cpu     Deployment/demo-app   0%/50%    1         5         1  (back to baseline)
 ```
 
-HPA has a stabilization window (default 5 minutes from the last scale-up event, per `behavior.scaleDown.stabilizationWindowSeconds`). Scale-down won't happen immediately — it waits to prevent flapping.
+HPA has a stabilization window to prevent flapping (set to 60 seconds in `hpa-cpu.yaml`, the default is 300). Scale-down won't happen immediately — it waits for the window to expire.
 ```
 
 ## Step 5 — Memory-Based HPA
@@ -242,7 +242,7 @@ kubectl delete namespace auto-scaling-demo
 | HPA is reactive, not predictive | It scales *after* load exceeds the threshold, not before |
 | Load distributes across pods | New pods pick up traffic, smoothing the per-pod CPU average |
 | Scale-up is fast (~15s default) | New pods appear quickly once the threshold is breached |
-| Scale-down has a cooldown window | Default 5-minute stabilization prevents flapping |
+| Scale-down has a cooldown window | 60s stabilization in our manifest prevents flapping (K8s default is 5min) |
 | Service-level load matters | Hitting the Service (not a pod) distributes load realistically |
 | Resource requests determine thresholds | HPA calculates % utilization against the pod's `resources.requests` |
 
