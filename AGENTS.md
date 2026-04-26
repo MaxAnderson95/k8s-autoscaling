@@ -59,3 +59,4 @@
 - Branch naming: `type/description` in kebab-case.
 - Never commit secrets or credentials.
 - Never mention AI in commit messages.
+- Never mention the company, its internal tooling, or proprietary setup in commits, code, config, or any files tracked in the repo — keep everything generic.
