@@ -97,7 +97,7 @@ helm install demo-app oci://ghcr.io/maxanderson95/k8s-autoscaling/demo-app-chart
 helm install demo-app ./chart -n auto-scaling-demo
 
 # Port-forward and test
-kubectl port-forward svc/demo-app 8080:80 -n auto-scaling-demo -n auto-scaling-demo
+kubectl port-forward svc/demo-app 8080:80 -n auto-scaling-demo
 curl http://localhost:8080/status
 ```
 
